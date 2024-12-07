@@ -24,7 +24,11 @@ func main() {
 
 	go func() {
 		defer func() { done <- struct{}{} }()
-		_ = r.Run(ctx)
+
+		err = r.Run(ctx)
+		if err != nil {
+			log.Fatalf("error from r.Run: %v", err)
+		}
 	}()
 
 	h := cluster.NewHandler(r)
