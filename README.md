@@ -57,20 +57,12 @@ curl --request GET \
 ```
 
 ```
-Journal of 23d898cf-1c1e-449f-9032-e30ffabdc9a5:
-0:{TERM:0, DATA:"[222 173 190 239]"}
-1:{TERM:0, DATA:"map[hello:1]"}
-2:{TERM:0, DATA:"map[hello:1]"}
-3:{TERM:0, DATA:"map[hello:1]"}
-4:{TERM:0, DATA:"map[hello:1]"}
-5:{TERM:0, DATA:"map[hello:1]"}
-6:{TERM:0, DATA:"map[hello:1]"}
-7:{TERM:0, DATA:"map[hello:1]"}
-8:{TERM:0, DATA:"map[bog:2]"}
-9:{TERM:0, DATA:"map[rfefer:2]"}
-10:{TERM:0, DATA:"map[rfefer:2]"}
-11:{TERM:0, DATA:"map[rfefer:2]"}
-12:{TERM:0, DATA:"map[bye:cat hello:world]"}
+{
+  "id": "784923f2-7472-43d2-a2a4-a807f1e96ed4",
+  "log": [
+    "0:{TERM:-1, DATA:\"[222 173 190 239]\"}"
+  ]
+}
 ```
 
 ## Send request to set key:value in distributed storage
