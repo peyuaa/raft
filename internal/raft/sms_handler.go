@@ -163,11 +163,16 @@ func (n *Node) appendEntriesResponseHandler(msg sms.AppendEntriesResponse) {
 						Term: n.term,
 						Data: v,
 					})
-					n.journal.Put(journal.Message{
+
+					err := n.journal.Put(journal.Message{
 						Term:  n.term,
 						Index: n.journal.Len(),
 						Data:  v,
 					})
+					if err != nil {
+						n.logger.Error("unable to put message in the journal: %v", err)
+					}
+
 					n.voteUpdate = NewVoteUpdate(entries)
 				default:
 				}
