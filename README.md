@@ -5,7 +5,7 @@ https://www.usebruno.com/
 
 ## Get all nodes
 
-```http request
+```
 curl --request GET \
   --url http://localhost:8080/nodes
 ```
@@ -54,7 +54,7 @@ curl --request GET \
 
 ## Get node journal
 
-```http request
+```
 curl --request GET \
   --url 'http://localhost:8080/journal?node=23d898cf-1c1e-449f-9032-e30ffabdc9a5'
 ```
@@ -70,7 +70,7 @@ curl --request GET \
 
 ## Send request to set key:value in distributed storage
 
-```http request
+```
 curl --request GET \
   --url http://localhost:8080/request \
   --header 'content-type: application/json' \
@@ -92,19 +92,19 @@ curl --request GET \
 ```
 
 ## Kill node
-```http request
+```
 curl --request GET \
   --url 'http://localhost:8080/kill?node=bba075a0-240e-4212-901a-b76a984d1be9'
 ```
 
 ## Recover node
-```http request
+```
 curl --request GET \
 --url 'http://localhost:8080/recover?node=bba075a0-240e-4212-901a-b76a984d1be9'
 ```
 
 ## Get node storage dump
-```http request
+```
 curl --request GET \
   --url 'http://localhost:8080/dump?node=23d898cf-1c1e-449f-9032-e30ffabdc9a5'
 ```
@@ -117,7 +117,7 @@ curl --request GET \
 ```
 
 ## Get value from storage by key
-```http request
+```
 curl --request GET \
   --url 'http://localhost:8080/get?node=36ea6177-50b7-411c-b2d6-efcd61a0a43a&key=world'
 ```
@@ -131,7 +131,7 @@ curl --request GET \
 ```
 
 ## Connect nodes
-```http request
+```
 curl --request GET \
   --url 'http://localhost:8080/connect?node=23d898cf-1c1e-449f-9032-e30ffabdc9a5&with=36ea6177-50b7-411c-b2d6-efcd61a0a43a'
 ```
@@ -145,7 +145,7 @@ curl --request GET \
 ```
 
 ## Disconnect nodes
-```http request
+```
 curl --request GET \
   --url 'http://localhost:8080/disconnect?node=23d898cf-1c1e-449f-9032-e30ffabdc9a5&with=36ea6177-50b7-411c-b2d6-efcd61a0a43a'
 ```
@@ -159,7 +159,7 @@ curl --request GET \
 ```
 
 ## Get node topology
-```http request
+```
 curl --request GET \
   --url 'http://localhost:8080/topology?node=36ea6177-50b7-411c-b2d6-efcd61a0a43a'
 ```
