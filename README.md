@@ -1,5 +1,8 @@
 # raft
 
+Коллекция с запросами находится в директории bruno-raft-collection
+https://www.usebruno.com/
+
 ## Get all nodes
 
 ```http request
