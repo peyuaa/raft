@@ -8,13 +8,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/peyuaa/raft/internal/raft"
+	"github.com/peyuaa/raft/internal/cluster"
 )
 
 const nodesCount = 5
 
 func main() {
-	r, err := raft.New(nodesCount)
+	r, err := cluster.New(nodesCount)
 	if err != nil {
 		log.Fatalf("unable to create raft cluster: %v", err)
 	}
@@ -27,7 +27,7 @@ func main() {
 		_ = r.Run(ctx)
 	}()
 
-	h := raft.NewHandler(r)
+	h := cluster.NewHandler(r)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/nodes", h.Nodes)
 	mux.HandleFunc("/journal", h.Journal)

@@ -1,4 +1,4 @@
-package raft
+package cluster
 
 import (
 	"context"
@@ -10,9 +10,9 @@ import (
 
 	"github.com/charmbracelet/log"
 
+	"github.com/peyuaa/raft/internal/cluster/sms"
 	"github.com/peyuaa/raft/internal/journal"
 	raftmap "github.com/peyuaa/raft/internal/map"
-	"github.com/peyuaa/raft/internal/raft/sms"
 
 	"github.com/google/uuid"
 )

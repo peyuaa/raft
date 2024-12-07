@@ -1,10 +1,10 @@
-package raft
+package cluster
 
 import (
 	"time"
 
+	"github.com/peyuaa/raft/internal/cluster/sms"
 	"github.com/peyuaa/raft/internal/journal"
-	"github.com/peyuaa/raft/internal/raft/sms"
 )
 
 type entry = sms.Entry[any]
