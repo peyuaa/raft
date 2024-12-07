@@ -195,9 +195,8 @@ func (n *Node) IsLeaderDead(timeNow time.Time) bool {
 	return !n.leaderHeartDeadline.IsZero() && n.leaderHeartDeadline.Before(timeNow)
 }
 
-func (n *Node) Send(sms SMS) error {
+func (n *Node) Send(sms SMS) {
 	n.messages <- sms
-	return nil
 }
 
 func (n *Node) Election(timeNow time.Time) {
@@ -207,7 +206,7 @@ func (n *Node) Election(timeNow time.Time) {
 	n.updateTerm(n.term+1, timeNow)
 	go func() {
 		for _, node := range n.nodes {
-			_ = node.Send(sms.RequestVote{
+			node.Send(sms.RequestVote{
 				From: n.ID().String(),
 				To:   node.ID().String(),
 				Term: n.term,
@@ -244,7 +243,7 @@ func (n *Node) retryRequestVotes() {
 		if n.voted {
 			continue
 		}
-		_ = n.nodes[id].Send(sms.RequestVote{
+		n.nodes[id].Send(sms.RequestVote{
 			From: n.ID().String(),
 			To:   id.String(),
 			Term: n.term,

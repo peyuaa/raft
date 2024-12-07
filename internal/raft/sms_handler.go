@@ -13,7 +13,7 @@ func (n *Node) requestVoteHandle(msg sms.RequestVote, timeNow time.Time) {
 	to := n.nodes[msg.GetFrom()]
 
 	if msg.GetTerm() <= n.term { // if we don't need to update term
-		_ = to.Send(sms.Vote{
+		to.Send(sms.Vote{
 			From:        n.ID().String(),
 			To:          to.ID().String(),
 			Term:        n.term,
@@ -38,7 +38,7 @@ func (n *Node) requestVoteHandle(msg sms.RequestVote, timeNow time.Time) {
 		VoteGranted: granted,
 	}
 
-	_ = to.Send(vote)
+	to.Send(vote)
 }
 
 func (n *Node) voteHandler(msg sms.Vote) {
@@ -62,7 +62,7 @@ func (n *Node) voteHandler(msg sms.Vote) {
 		n.SetRole(Leader)
 		n.leaderHeartDeadline = time.Time{}
 		for _, node := range n.nodes {
-			_ = node.Send(sms.AppendEntries{
+			node.Send(sms.AppendEntries{
 				From:        n.ID().String(),
 				To:          node.ID().String(),
 				Term:        n.term,
@@ -93,7 +93,7 @@ func (n *Node) appendEntriesHandler(msg sms.AppendEntries, timeNow time.Time) {
 		if n.journal.PrevIndex() > n.journal.CommitIndex() {
 			n.logger.Infof(">>>")
 			if n.journal.Commit() {
-				_ = n.nodes[msg.GetFrom()].Send(sms.AppendEntriesResponse{
+				n.nodes[msg.GetFrom()].Send(sms.AppendEntriesResponse{
 					From:       n.ID().String(),
 					To:         msg.From,
 					Term:       n.term,
@@ -114,7 +114,7 @@ func (n *Node) appendEntriesHandler(msg sms.AppendEntries, timeNow time.Time) {
 				Data:  msg.Entries[0].Data,
 			})
 		}
-		_ = n.nodes[msg.GetFrom()].Send(sms.AppendEntriesResponse{
+		n.nodes[msg.GetFrom()].Send(sms.AppendEntriesResponse{
 			From:       n.ID().String(),
 			To:         msg.From,
 			Term:       n.term,
@@ -124,7 +124,7 @@ func (n *Node) appendEntriesHandler(msg sms.AppendEntries, timeNow time.Time) {
 		return
 	}
 	n.logger.Infof("<<<")
-	_ = n.nodes[msg.GetFrom()].Send(sms.AppendEntriesResponse{
+	n.nodes[msg.GetFrom()].Send(sms.AppendEntriesResponse{
 		From:       n.ID().String(),
 		To:         msg.From,
 		Term:       n.term,
