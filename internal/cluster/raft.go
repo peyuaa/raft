@@ -156,7 +156,23 @@ func (h *Handler) Request(w http.ResponseWriter, r *http.Request) {
 
 	node.Request(req.Msg)
 
-	_, _ = w.Write([]byte(fmt.Sprint(req)))
+	res := RequestResponse{
+		Id:    req.ID,
+		Key:   req.Msg["key"].(string),
+		Value: req.Msg["key"].(string),
+	}
+
+	body, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	_, err = w.Write(body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (h *Handler) Kill(w http.ResponseWriter, r *http.Request) {

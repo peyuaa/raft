@@ -81,7 +81,11 @@ curl --request GET \
 ```
 
 ```
-{map[key:world value:cat] 23d898cf-1c1e-449f-9032-e30ffabdc9a5}
+{
+  "id": "fec11053-437f-4759-9821-31753f9da2a9",
+  "key": "world",
+  "value": "world"
+}
 ```
 
 ## Kill node
