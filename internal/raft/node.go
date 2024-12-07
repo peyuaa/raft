@@ -140,7 +140,7 @@ loop:
 			break loop
 		case msg := <-n.messages:
 			now := time.Now()
-			n.logger.Infof("%v: got sms with message `%s`", n.ID(), msg)
+			n.logger.Infof("%v: got message `%s`", n.ID(), msg)
 			if msg.GetTo() != n.ID() {
 				break
 			}
