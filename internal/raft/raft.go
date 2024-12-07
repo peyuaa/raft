@@ -15,11 +15,11 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type Raft struct {
+type Cluster struct {
 	nodes []*Node
 }
 
-func New(n int) (*Raft, error) {
+func New(n int) (*Cluster, error) {
 	nodes := make([]*Node, n)
 	for i := range n {
 		nodes[i] = NewNode(slices.Values(nodes[:i]))
@@ -29,10 +29,10 @@ func New(n int) (*Raft, error) {
 			}
 		}
 	}
-	return &Raft{nodes}, nil
+	return &Cluster{nodes}, nil
 }
 
-func (r *Raft) Run(ctx context.Context) error {
+func (r *Cluster) Run(ctx context.Context) error {
 	g, ctx := errgroup.WithContext(ctx)
 	for _, n := range r.nodes {
 		g.Go(func() error {
@@ -42,7 +42,7 @@ func (r *Raft) Run(ctx context.Context) error {
 	return g.Wait()
 }
 
-func (r *Raft) Node(id ID) *Node {
+func (r *Cluster) Node(id ID) *Node {
 	for _, n := range r.nodes {
 		if n.ID() == id {
 			return n
@@ -52,10 +52,10 @@ func (r *Raft) Node(id ID) *Node {
 }
 
 type Handler struct {
-	raft *Raft
+	raft *Cluster
 }
 
-func NewHandler(raft *Raft) *Handler {
+func NewHandler(raft *Cluster) *Handler {
 	return &Handler{raft}
 }
 

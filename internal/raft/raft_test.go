@@ -98,7 +98,7 @@ func TestLog(t *testing.T) {
 	<-done
 }
 
-func findLeader(raft *Raft) (n *Node) {
+func findLeader(raft *Cluster) (n *Node) {
 	maxTerm := -2
 	for _, node := range raft.nodes {
 		if node.Role() == Leader && node.Term() > maxTerm {
