@@ -134,7 +134,11 @@ curl --request GET \
 ```
 
 ```
-true
+{
+  "node": "971f456c-e905-4685-9f61-8189af22f047",
+  "with": "4aad792b-fe0a-43a2-bb26-9bf11cb4ab80",
+  "status": true
+}
 ```
 
 ## Disconnect nodes

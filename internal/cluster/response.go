@@ -33,3 +33,9 @@ type GetResponse struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
+
+type ConnectResponse struct {
+	Node   string `json:"node"`
+	With   string `json:"with"`
+	Status bool   `json:"status"`
+}

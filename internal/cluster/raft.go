@@ -409,8 +409,23 @@ func (h *Handler) Connect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b := node.Connect(uidWith)
-	_, err = w.Write([]byte(fmt.Sprint(b)))
+	status := node.Connect(uidWith)
+
+	res := ConnectResponse{
+		Node:   id,
+		With:   idWith,
+		Status: status,
+	}
+
+	body, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	_, err = w.Write(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
