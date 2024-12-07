@@ -62,7 +62,7 @@ func NewHandler(raft *Cluster) *Handler {
 func (h *Handler) Nodes(w http.ResponseWriter, _ *http.Request) {
 	buf := &bytes.Buffer{}
 	for i, n := range h.raft.nodes {
-		buf.WriteString(strconv.Itoa(i+1) + ": " + n.id.String() + " | Role:" + n.role.String() + " | Term:" + strconv.Itoa(n.Term()) + " | JournalLen: " + strconv.Itoa(n.JournalLen()) + " | alive=" + fmt.Sprint(!n.turnOffBool) + "\n")
+		buf.WriteString(strconv.Itoa(i+1) + ": " + n.id.String() + " | Role:" + n.role.String() + " | Term:" + strconv.Itoa(n.term) + " | JournalLen: " + strconv.Itoa(n.journal.Len()) + " | alive=" + fmt.Sprint(!n.turnOffBool) + "\n")
 	}
 
 	_, err := io.Copy(w, buf)

@@ -43,13 +43,13 @@ func TestRaft(t *testing.T) {
 	t.Log(secondLeader.id)
 
 	require.NotEqual(t, firstLeader.id, secondLeader.id)
-	require.NotEqual(t, firstLeader.Term(), secondLeader.Term())
+	require.NotEqual(t, firstLeader.term, secondLeader.term)
 
 	// turn on first leader
 	<-firstLeader.turnOff
 
 	require.Eventually(t, func() bool {
-		return firstLeader.Term() == secondLeader.Term()
+		return firstLeader.term == secondLeader.term
 	}, 2*time.Second, 100*time.Millisecond)
 
 	cancel()
@@ -101,9 +101,9 @@ func TestLog(t *testing.T) {
 func findLeader(raft *Cluster) (n *Node) {
 	maxTerm := -2
 	for _, node := range raft.nodes {
-		if node.role == Leader && node.Term() > maxTerm {
+		if node.role == Leader && node.term > maxTerm {
 			n = node
-			maxTerm = node.Term()
+			maxTerm = node.term
 		}
 	}
 	return

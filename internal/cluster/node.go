@@ -106,14 +106,6 @@ func NewNode(nodes iter.Seq[*Node]) *Node {
 	return n
 }
 
-func (n *Node) Term() int {
-	return n.term
-}
-
-func (n *Node) JournalLen() int {
-	return n.journal.Len()
-}
-
 func (n *Node) Run(ctx context.Context) error {
 	defer func() {
 		if r := recover(); r != nil {
