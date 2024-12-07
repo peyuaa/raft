@@ -27,3 +27,9 @@ type DumpResponse struct {
 	Id   string `json:"id"`
 	Dump string `json:"dump"`
 }
+
+type GetResponse struct {
+	Id    string `json:"id"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}

@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"slices"
-	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
@@ -159,7 +158,7 @@ func (h *Handler) Request(w http.ResponseWriter, r *http.Request) {
 	res := RequestResponse{
 		Id:    req.ID,
 		Key:   req.Msg["key"].(string),
-		Value: req.Msg["key"].(string),
+		Value: req.Msg["value"].(string),
 	}
 
 	body, err := json.Marshal(res)
@@ -279,13 +278,29 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	v, ok := node.journal.Proc().Get(r.URL.Query().Get("key"))
+	key := r.URL.Query().Get("key")
+
+	v, ok := node.journal.Proc().Get(key)
 	if !ok {
 		http.Error(w, "key not found", http.StatusNotFound)
 		return
 	}
 
-	_, err = io.Copy(w, strings.NewReader(fmt.Sprint(v)))
+	res := GetResponse{
+		Id:    id,
+		Key:   key,
+		Value: v.(string),
+	}
+
+	body, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	_, err = w.Write(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
