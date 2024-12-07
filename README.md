@@ -120,7 +120,11 @@ curl --request GET \
 ```
 
 ```
-cat
+{
+  "id": "5cc728af-dea9-412f-8f0c-0af5d27992a5",
+  "key": "world",
+  "value": "cat"
+}
 ```
 
 ## Connect nodes
