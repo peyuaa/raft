@@ -1,3 +1,3 @@
-module github.com/peyuaa/distributed_storage
+module github.com/peyuaa/raft
 
 go 1.23.2
