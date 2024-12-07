@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -60,12 +59,27 @@ func NewHandler(raft *Cluster) *Handler {
 }
 
 func (h *Handler) Nodes(w http.ResponseWriter, _ *http.Request) {
-	buf := &bytes.Buffer{}
-	for i, n := range h.raft.nodes {
-		buf.WriteString(strconv.Itoa(i+1) + ": " + n.id.String() + " | Role:" + n.role.String() + " | Term:" + strconv.Itoa(n.term) + " | JournalLen: " + strconv.Itoa(n.journal.Len()) + " | alive=" + fmt.Sprint(!n.turnOffBool) + "\n")
+	response := NodesResponse{
+		Nodes: make([]NodeResponse, 0, len(h.raft.nodes)),
 	}
 
-	_, err := io.Copy(w, buf)
+	for _, n := range h.raft.nodes {
+		response.Nodes = append(response.Nodes, NodeResponse{
+			Id:         n.id.String(),
+			Role:       n.role.String(),
+			Term:       n.term,
+			JournalLen: n.journal.Len(),
+			Alive:      !n.turnOffBool,
+		})
+	}
+
+	res, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
