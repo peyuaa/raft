@@ -371,7 +371,22 @@ func (h *Handler) Disconnect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	b := node.Disconnect(uidWith)
-	_, err = w.Write([]byte(fmt.Sprint(b)))
+
+	res := DisconnectResponse{
+		Node:   id,
+		With:   idWith,
+		Status: b,
+	}
+
+	body, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	_, err = w.Write(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -148,7 +148,11 @@ curl --request GET \
 ```
 
 ```
-true
+{
+  "node": "0b3c0122-0b3b-4ebe-8788-50415cdd0ef7",
+  "with": "f9a871b1-f471-4b14-9e00-38c762bb7461",
+  "status": true
+}
 ```
 
 ## Get node topology

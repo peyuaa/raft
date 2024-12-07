@@ -39,3 +39,9 @@ type ConnectResponse struct {
 	With   string `json:"with"`
 	Status bool   `json:"status"`
 }
+
+type DisconnectResponse struct {
+	Node   string `json:"node"`
+	With   string `json:"with"`
+	Status bool   `json:"status"`
+}
