@@ -270,10 +270,6 @@ func (n *Node) Request(s any) {
 	n.waitRequest <- s
 }
 
-func (n *Node) Topology() map[ID]bool {
-	return n.hasConnects
-}
-
 func (n *Node) Disconnect(id ID) bool {
 	if _, ok := n.hasConnects[id]; !ok {
 		return false
