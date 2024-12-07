@@ -105,13 +105,24 @@ func (h *Handler) Journal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	buf := &bytes.Buffer{}
-	buf.WriteString("Journal of " + node.id.String() + ":\n")
-	for entry := range node.journal.Entries() {
-		buf.WriteString(entry.String() + "\n")
+	res := JournalResponse{
+		Id:  node.id.String(),
+		Log: make([]string, 0, node.journal.Len()),
 	}
 
-	_, err = io.Copy(w, buf)
+	for entry := range node.journal.Entries() {
+		res.Log = append(res.Log, entry.String())
+	}
+
+	body, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	_, err = w.Write(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
