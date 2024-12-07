@@ -3,17 +3,17 @@ package cluster
 import (
 	"time"
 
-	"github.com/peyuaa/raft/internal/cluster/sms"
+	"github.com/peyuaa/raft/internal/cluster/message"
 	"github.com/peyuaa/raft/internal/journal"
 )
 
-type entry = sms.Entry[any]
+type entry = message.Entry[any]
 
-func (n *Node) requestVoteHandle(msg sms.RequestVote, timeNow time.Time) {
+func (n *Node) requestVoteHandle(msg message.RequestVote, timeNow time.Time) {
 	to := n.nodes[msg.GetFrom()]
 
 	if msg.GetTerm() <= n.term { // if we don't need to update term
-		to.Send(sms.Vote{
+		to.Send(message.Vote{
 			From:        n.ID().String(),
 			To:          to.ID().String(),
 			Term:        n.term,
@@ -31,7 +31,7 @@ func (n *Node) requestVoteHandle(msg sms.RequestVote, timeNow time.Time) {
 
 	n.updateTerm(msg.GetTerm(), timeNow)
 
-	vote := sms.Vote{
+	vote := message.Vote{
 		From:        n.ID().String(),
 		To:          to.ID().String(),
 		Term:        n.term,
@@ -41,7 +41,7 @@ func (n *Node) requestVoteHandle(msg sms.RequestVote, timeNow time.Time) {
 	to.Send(vote)
 }
 
-func (n *Node) voteHandler(msg sms.Vote) {
+func (n *Node) voteHandler(msg message.Vote) {
 	if n.role == Leader {
 		return
 	}
@@ -62,7 +62,7 @@ func (n *Node) voteHandler(msg sms.Vote) {
 		n.SetRole(Leader)
 		n.leaderHeartDeadline = time.Time{}
 		for _, node := range n.nodes {
-			node.Send(sms.AppendEntries{
+			node.Send(message.AppendEntries{
 				From:        n.ID().String(),
 				To:          node.ID().String(),
 				Term:        n.term,
@@ -75,7 +75,7 @@ func (n *Node) voteHandler(msg sms.Vote) {
 	}
 }
 
-func (n *Node) appendEntriesHandler(msg sms.AppendEntries, timeNow time.Time) {
+func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time) {
 	n.updateTerm(msg.GetTerm(), timeNow)
 	n.voted = false
 
@@ -93,7 +93,7 @@ func (n *Node) appendEntriesHandler(msg sms.AppendEntries, timeNow time.Time) {
 		if n.journal.PrevIndex() > n.journal.CommitIndex() {
 			n.logger.Infof(">>>")
 			if n.journal.Commit() {
-				n.nodes[msg.GetFrom()].Send(sms.AppendEntriesResponse{
+				n.nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
 					From:       n.ID().String(),
 					To:         msg.From,
 					Term:       n.term,
@@ -114,7 +114,7 @@ func (n *Node) appendEntriesHandler(msg sms.AppendEntries, timeNow time.Time) {
 				Data:  msg.Entries[0].Data,
 			})
 		}
-		n.nodes[msg.GetFrom()].Send(sms.AppendEntriesResponse{
+		n.nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
 			From:       n.ID().String(),
 			To:         msg.From,
 			Term:       n.term,
@@ -124,7 +124,7 @@ func (n *Node) appendEntriesHandler(msg sms.AppendEntries, timeNow time.Time) {
 		return
 	}
 	n.logger.Infof("<<<")
-	n.nodes[msg.GetFrom()].Send(sms.AppendEntriesResponse{
+	n.nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
 		From:       n.ID().String(),
 		To:         msg.From,
 		Term:       n.term,
@@ -133,11 +133,11 @@ func (n *Node) appendEntriesHandler(msg sms.AppendEntries, timeNow time.Time) {
 	})
 }
 
-func (n *Node) appendEntriesResponseHandler(msg sms.AppendEntriesResponse) {
+func (n *Node) appendEntriesResponseHandler(msg message.AppendEntriesResponse) {
 	if msg.Success {
 		if msg.MatchIndex < n.journal.CommitIndex() {
 			n.logger.Info("<<<<<<")
-			n.nodes[msg.GetFrom()].Send(sms.AppendEntries{
+			n.nodes[msg.GetFrom()].Send(message.AppendEntries{
 				From:        n.ID().String(),
 				To:          msg.From,
 				Term:        n.term,
@@ -182,7 +182,7 @@ func (n *Node) appendEntriesResponseHandler(msg sms.AppendEntriesResponse) {
 				}
 			}
 			n.logger.Info("!!======!!")
-			n.nodes[msg.GetFrom()].Send(sms.AppendEntries{
+			n.nodes[msg.GetFrom()].Send(message.AppendEntries{
 				From:        n.ID().String(),
 				To:          msg.From,
 				Term:        n.term,
@@ -203,7 +203,7 @@ func (n *Node) appendEntriesResponseHandler(msg sms.AppendEntriesResponse) {
 			}
 		}
 		n.logger.Info("!!!!!!!!!!!")
-		n.nodes[msg.GetFrom()].Send(sms.AppendEntries{
+		n.nodes[msg.GetFrom()].Send(message.AppendEntries{
 			From:        n.ID().String(),
 			To:          msg.From,
 			Term:        n.term,
@@ -214,7 +214,7 @@ func (n *Node) appendEntriesResponseHandler(msg sms.AppendEntriesResponse) {
 		})
 		return
 	}
-	n.nodes[msg.GetFrom()].Send(sms.AppendEntries{
+	n.nodes[msg.GetFrom()].Send(message.AppendEntries{
 		From:        n.ID().String(),
 		To:          msg.From,
 		Term:        n.term,

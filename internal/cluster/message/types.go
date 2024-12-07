@@ -1,4 +1,4 @@
-package sms
+package message
 
 import (
 	"fmt"

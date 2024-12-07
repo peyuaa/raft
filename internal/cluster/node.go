@@ -10,7 +10,7 @@ import (
 
 	"github.com/charmbracelet/log"
 
-	"github.com/peyuaa/raft/internal/cluster/sms"
+	"github.com/peyuaa/raft/internal/cluster/message"
 	"github.com/peyuaa/raft/internal/journal"
 	raftmap "github.com/peyuaa/raft/internal/map"
 
@@ -19,16 +19,16 @@ import (
 
 type (
 	ID         fmt.Stringer
-	SMS        = sms.Message
+	SMS        = message.Message
 	VoteUpdate struct {
-		Entry []sms.Entry[any]
+		Entry []message.Entry[any]
 		Count int
 		Nodes map[ID]bool
 		Done  bool
 	}
 )
 
-func NewVoteUpdate(entry []sms.Entry[any]) VoteUpdate {
+func NewVoteUpdate(entry []message.Entry[any]) VoteUpdate {
 	return VoteUpdate{
 		Entry: entry,
 		Count: 0,
@@ -151,13 +151,13 @@ loop:
 				break
 			}
 			switch v := msg.(type) {
-			case sms.RequestVote:
+			case message.RequestVote:
 				n.requestVoteHandle(v, now)
-			case sms.Vote:
+			case message.Vote:
 				n.voteHandler(v)
-			case sms.AppendEntries:
+			case message.AppendEntries:
 				n.appendEntriesHandler(v, now)
-			case sms.AppendEntriesResponse:
+			case message.AppendEntriesResponse:
 				if n.role != Leader {
 					continue
 				}
@@ -206,7 +206,7 @@ func (n *Node) Election(timeNow time.Time) {
 	n.updateTerm(n.term+1, timeNow)
 	go func() {
 		for _, node := range n.nodes {
-			node.Send(sms.RequestVote{
+			node.Send(message.RequestVote{
 				From: n.ID().String(),
 				To:   node.ID().String(),
 				Term: n.term,
@@ -243,7 +243,7 @@ func (n *Node) retryRequestVotes() {
 		if n.voted {
 			continue
 		}
-		n.nodes[id].Send(sms.RequestVote{
+		n.nodes[id].Send(message.RequestVote{
 			From: n.ID().String(),
 			To:   id.String(),
 			Term: n.term,
