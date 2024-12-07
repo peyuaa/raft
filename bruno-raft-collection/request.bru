@@ -1,0 +1,21 @@
+meta {
+  name: request
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:8080/request
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "23d898cf-1c1e-449f-9032-e30ffabdc9a5",
+    "msg": {
+      "key": "world",
+      "value": "cat"
+    }
+  }
+}
