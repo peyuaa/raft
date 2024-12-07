@@ -44,7 +44,7 @@ func (c *Cluster) Run(ctx context.Context) error {
 
 func (c *Cluster) Node(id ID) *Node {
 	for _, n := range c.nodes {
-		if n.ID() == id {
+		if n.id == id {
 			return n
 		}
 	}
@@ -62,7 +62,7 @@ func NewHandler(raft *Cluster) *Handler {
 func (h *Handler) Nodes(w http.ResponseWriter, _ *http.Request) {
 	buf := &bytes.Buffer{}
 	for i, n := range h.raft.nodes {
-		buf.WriteString(strconv.Itoa(i+1) + ": " + n.ID().String() + " | Role:" + n.Role().String() + " | Term:" + strconv.Itoa(n.Term()) + " | JournalLen: " + strconv.Itoa(n.JournalLen()) + " | alive=" + fmt.Sprint(!n.turnOffBool) + "\n")
+		buf.WriteString(strconv.Itoa(i+1) + ": " + n.id.String() + " | Role:" + n.role.String() + " | Term:" + strconv.Itoa(n.Term()) + " | JournalLen: " + strconv.Itoa(n.JournalLen()) + " | alive=" + fmt.Sprint(!n.turnOffBool) + "\n")
 	}
 
 	_, err := io.Copy(w, buf)
@@ -92,7 +92,7 @@ func (h *Handler) Journal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	buf := &bytes.Buffer{}
-	buf.WriteString("Journal of " + node.ID().String() + ":\n")
+	buf.WriteString("Journal of " + node.id.String() + ":\n")
 	for entry := range node.journal.Entries() {
 		buf.WriteString(entry.String() + "\n")
 	}
@@ -200,7 +200,7 @@ func (h *Handler) DumpMap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	buf := &bytes.Buffer{}
-	buf.WriteString("Map of " + node.ID().String() + ":\n")
+	buf.WriteString("Map of " + node.id.String() + ":\n")
 	buf.WriteString(fmt.Sprint(node.journal.Proc().Dump()))
 
 	_, err = io.Copy(w, buf)

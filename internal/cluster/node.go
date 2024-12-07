@@ -106,20 +106,12 @@ func NewNode(nodes iter.Seq[*Node]) *Node {
 	return n
 }
 
-func (n *Node) ID() ID {
-	return n.id
-}
-
 func (n *Node) Term() int {
 	return n.term
 }
 
 func (n *Node) JournalLen() int {
 	return n.journal.Len()
-}
-
-func (n *Node) Role() Role {
-	return n.role
 }
 
 func (n *Node) Run(ctx context.Context) error {
@@ -140,8 +132,8 @@ loop:
 			break loop
 		case msg := <-n.messages:
 			now := time.Now()
-			n.logger.Infof("%v: got message `%s`", n.ID(), msg)
-			if msg.GetTo() != n.ID() {
+			n.logger.Infof("%v: got message `%s`", n.id, msg)
+			if msg.GetTo() != n.id {
 				break
 			}
 			if !n.hasConnects[msg.GetFrom()] {
@@ -200,15 +192,15 @@ func (n *Node) Send(sms SMS) {
 }
 
 func (n *Node) Election(timeNow time.Time) {
-	n.logger.Infof("%v: election", n.ID())
+	n.logger.Infof("%v: election", n.id)
 	n.currentVotes = 0
 	n.clearVotePool()
 	n.updateTerm(n.term+1, timeNow)
 	go func() {
 		for _, node := range n.nodes {
 			node.Send(message.RequestVote{
-				From: n.ID().String(),
-				To:   node.ID().String(),
+				From: n.id.String(),
+				To:   node.id.String(),
 				Term: n.term,
 			})
 		}
@@ -224,8 +216,8 @@ func (n *Node) Add(node *Node) error {
 		return fmt.Errorf("node `%v` already exists", node.id)
 	}
 	n.nodes[node.id] = node
-	n.votePool[node.ID()] = false
-	n.indexPool[node.ID()] = time.NewTicker(time.Second / _factor)
+	n.votePool[node.id] = false
+	n.indexPool[node.id] = time.NewTicker(time.Second / _factor)
 	n.hasConnects[node.id] = true
 	node.hasConnects[n.id] = true
 
@@ -244,7 +236,7 @@ func (n *Node) retryRequestVotes() {
 			continue
 		}
 		n.nodes[id].Send(message.RequestVote{
-			From: n.ID().String(),
+			From: n.id.String(),
 			To:   id.String(),
 			Term: n.term,
 		})
