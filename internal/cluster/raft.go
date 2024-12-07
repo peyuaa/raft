@@ -1,11 +1,9 @@
 package cluster
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"slices"
 
@@ -326,13 +324,27 @@ func (h *Handler) Topology(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	buf := &bytes.Buffer{}
-	buf.WriteString("TOPOLOGY FOR " + node.id.String() + "\n")
-	for nd, b := range node.hasConnects {
-		buf.WriteString(fmt.Sprintf("%s --> %t\n", nd, b))
+	res := TopologyResponse{
+		Id:    id,
+		Nodes: make([]NodesStatus, 0, len(node.hasConnects)),
 	}
 
-	_, err = io.Copy(w, buf)
+	for nd, b := range node.hasConnects {
+		res.Nodes = append(res.Nodes, NodesStatus{
+			Node:      nd.String(),
+			Connected: b,
+		})
+	}
+
+	body, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	_, err = w.Write(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

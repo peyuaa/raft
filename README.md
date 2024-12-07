@@ -162,9 +162,25 @@ curl --request GET \
 ```
 
 ```
-TOPOLOGY FOR 36ea6177-50b7-411c-b2d6-efcd61a0a43a
-34bc58bd-3a81-4c1a-b4c1-e9342f4461ac --> true
-23d898cf-1c1e-449f-9032-e30ffabdc9a5 --> false
-87eaf3ab-7f5d-474a-85db-61aa589c073e --> true
-bba075a0-240e-4212-901a-b76a984d1be9 --> true
+{
+  "id": "2f3ecd83-ed57-498c-906f-aa54454997e0",
+  "nodes": [
+    {
+      "node": "de65366e-38b1-48b7-ae71-16be1a567adb",
+      "connected": true
+    },
+    {
+      "node": "26065218-de14-4308-a034-be93a4fbe607",
+      "connected": true
+    },
+    {
+      "node": "b0d6d818-0fe2-49e1-b661-f938aba3c5e1",
+      "connected": true
+    },
+    {
+      "node": "d8d26056-1080-43b3-8d82-97703541b3d1",
+      "connected": true
+    }
+  ]
+}
 ```

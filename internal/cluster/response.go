@@ -45,3 +45,13 @@ type DisconnectResponse struct {
 	With   string `json:"with"`
 	Status bool   `json:"status"`
 }
+
+type NodesStatus struct {
+	Node      string `json:"node"`
+	Connected bool   `json:"connected"`
+}
+
+type TopologyResponse struct {
+	Id    string        `json:"id"`
+	Nodes []NodesStatus `json:"nodes"`
+}
