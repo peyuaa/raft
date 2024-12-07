@@ -32,9 +32,9 @@ func New(n int) (*Cluster, error) {
 	return &Cluster{nodes}, nil
 }
 
-func (r *Cluster) Run(ctx context.Context) error {
+func (c *Cluster) Run(ctx context.Context) error {
 	g, ctx := errgroup.WithContext(ctx)
-	for _, n := range r.nodes {
+	for _, n := range c.nodes {
 		g.Go(func() error {
 			return n.Run(ctx)
 		})
@@ -42,8 +42,8 @@ func (r *Cluster) Run(ctx context.Context) error {
 	return g.Wait()
 }
 
-func (r *Cluster) Node(id ID) *Node {
-	for _, n := range r.nodes {
+func (c *Cluster) Node(id ID) *Node {
+	for _, n := range c.nodes {
 		if n.ID() == id {
 			return n
 		}
