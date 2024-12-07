@@ -133,7 +133,7 @@ func (n *Node) appendEntriesHandler(msg sms.AppendEntries, timeNow time.Time) {
 	})
 }
 
-func (n *Node) appendEntriesResponseHandler(msg sms.AppendEntriesResponse, timeNow time.Time) {
+func (n *Node) appendEntriesResponseHandler(msg sms.AppendEntriesResponse) {
 	if msg.Success {
 		if msg.MatchIndex < n.journal.CommitIndex() {
 			n.logger.Info("<<<<<<")

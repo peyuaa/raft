@@ -162,7 +162,7 @@ loop:
 					continue
 				}
 				<-n.indexPool[msg.GetFrom()].C
-				n.appendEntriesResponseHandler(v, now)
+				n.appendEntriesResponseHandler(v)
 			}
 		case <-ticker.C:
 			if n.role == Leader {
