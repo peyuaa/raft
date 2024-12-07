@@ -8,11 +8,45 @@ curl --request GET \
 ```
 
 ```
-1: 23d898cf-1c1e-449f-9032-e30ffabdc9a5 | Role:Leader | Term:2 | JournalLen: 15 | alive=true
-2: 36ea6177-50b7-411c-b2d6-efcd61a0a43a | Role:Leader | Term:1 | JournalLen: 15 | alive=true
-3: 87eaf3ab-7f5d-474a-85db-61aa589c073e | Role:Follower | Term:2 | JournalLen: 15 | alive=true
-4: bba075a0-240e-4212-901a-b76a984d1be9 | Role:Follower | Term:2 | JournalLen: 15 | alive=true
-5: 34bc58bd-3a81-4c1a-b4c1-e9342f4461ac | Role:Follower | Term:2 | JournalLen: 15 | alive=true
+{
+  "nodes": [
+    {
+      "id": "d29b55df-9e93-4dcd-a83b-e6f24b3d6626",
+      "role": "Follower",
+      "term": 0,
+      "journal_len": 1,
+      "alive": true
+    },
+    {
+      "id": "fe7320bc-345f-4081-8642-5163da7cdc19",
+      "role": "Follower",
+      "term": 0,
+      "journal_len": 1,
+      "alive": true
+    },
+    {
+      "id": "df416274-bb5a-4d2a-b5c0-f734b503812e",
+      "role": "Follower",
+      "term": 0,
+      "journal_len": 1,
+      "alive": true
+    },
+    {
+      "id": "ff1b64fc-1db6-4567-9789-b49af98e1625",
+      "role": "Follower",
+      "term": 0,
+      "journal_len": 1,
+      "alive": true
+    },
+    {
+      "id": "686331b3-cfe9-4878-b798-6e6465189f81",
+      "role": "Leader",
+      "term": 0,
+      "journal_len": 1,
+      "alive": true
+    }
+  ]
+}
 ```
 
 ## Get node journal
