@@ -22,3 +22,8 @@ type RequestResponse struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
+
+type DumpResponse struct {
+	Id   string `json:"id"`
+	Dump string `json:"dump"`
+}

@@ -240,11 +240,20 @@ func (h *Handler) DumpMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	buf := &bytes.Buffer{}
-	buf.WriteString("Map of " + node.id.String() + ":\n")
-	buf.WriteString(fmt.Sprint(node.journal.Proc().Dump()))
+	res := DumpResponse{
+		Id:   node.id.String(),
+		Dump: fmt.Sprint(node.journal.Proc().Dump()),
+	}
 
-	_, err = io.Copy(w, buf)
+	body, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	_, err = w.Write(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

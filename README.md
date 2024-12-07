@@ -107,8 +107,10 @@ curl --request GET \
 ```
 
 ```
-Map of 23d898cf-1c1e-449f-9032-e30ffabdc9a5:
-map[world:cat]
+{
+  "id": "604485ad-1712-41c3-9aad-ae45a518a4bb",
+  "dump": "map[world:cat]"
+}
 ```
 
 ## Get value from storage by key
