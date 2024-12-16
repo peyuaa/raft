@@ -5,16 +5,18 @@ import (
 	"slices"
 
 	"golang.org/x/sync/errgroup"
+
+	"github.com/peyuaa/raft/internal/node"
 )
 
 type Cluster struct {
-	Nodes []*Node
+	Nodes []*node.Node
 }
 
 func New(n int) (*Cluster, error) {
-	nodes := make([]*Node, n)
+	nodes := make([]*node.Node, n)
 	for i := range n {
-		nodes[i] = NewNode(slices.Values(nodes[:i]))
+		nodes[i] = node.NewNode(slices.Values(nodes[:i]))
 		for _, nd := range nodes[:i] {
 			if err := nd.Add(nodes[i]); err != nil {
 				return nil, err
@@ -34,7 +36,7 @@ func (c *Cluster) Run(ctx context.Context) error {
 	return g.Wait()
 }
 
-func (c *Cluster) Node(id ID) *Node {
+func (c *Cluster) Node(id node.ID) *node.Node {
 	for _, n := range c.Nodes {
 		if n.Id == id {
 			return n
