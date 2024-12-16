@@ -42,22 +42,22 @@ const (
 )
 
 type Node struct {
-	Id                  ID
-	Term                int
-	Role                Role
-	Nodes               map[ID]*Node
-	Voted               bool
-	CurrentVotes        int
-	VotePool            map[ID]bool
-	MaxDelta            time.Duration
-	LeaderHeartDeadline time.Time
-	Messages            chan Message
-	Updaters            chan any
-	IndexPool           map[ID]*time.Ticker
-	NodePoolWait        map[ID]chan struct{}
-	VoteUpdate          VoteUpdate
-	WaitRequest         chan any
-	HasConnects         map[ID]bool
+	Id                      ID
+	Term                    int
+	Role                    Role
+	Nodes                   map[ID]*Node
+	Voted                   bool
+	CurrentVotes            int
+	VotePool                map[ID]bool
+	MaxDelta                time.Duration
+	LeaderHeartBeatDeadline time.Time
+	Messages                chan Message
+	Updaters                chan any
+	IndexPool               map[ID]*time.Ticker
+	NodePoolWait            map[ID]chan struct{}
+	VoteUpdate              VoteUpdate
+	WaitRequest             chan any
+	HasConnects             map[ID]bool
 
 	Journal *journal.Journal
 
@@ -73,23 +73,23 @@ const _factor = 16
 
 func NewNode(nodes iter.Seq[*Node]) *Node {
 	n := &Node{
-		Id:                  uuid.New(),
-		Journal:             journal.NewJournal(raftmap.New[any, any]()),
-		Term:                -1,
-		Role:                Follower,
-		Nodes:               make(map[ID]*Node),
-		VotePool:            make(map[ID]bool),
-		Messages:            make(chan Message, _messageBufferSise),
-		Updaters:            make(chan any, _messageBufferSise),
-		Logger:              log.New(os.Stdout),
-		MaxDelta:            randDelta(),
-		LeaderHeartDeadline: time.Now().Add(time.Second + rand.N(5*time.Second)),
-		TurnOff:             make(chan struct{}, 1),
-		NodePoolWait:        make(map[ID]chan struct{}, 1),
-		IndexPool:           make(map[ID]*time.Ticker),
-		VoteUpdate:          VoteUpdate{Done: true},
-		WaitRequest:         make(chan any, _messageBufferSise),
-		HasConnects:         map[ID]bool{},
+		Id:                      uuid.New(),
+		Journal:                 journal.NewJournal(raftmap.New[any, any]()),
+		Term:                    -1,
+		Role:                    Follower,
+		Nodes:                   make(map[ID]*Node),
+		VotePool:                make(map[ID]bool),
+		Messages:                make(chan Message, _messageBufferSise),
+		Updaters:                make(chan any, _messageBufferSise),
+		Logger:                  log.New(os.Stdout),
+		MaxDelta:                randDelta(),
+		LeaderHeartBeatDeadline: time.Now().Add(time.Second + rand.N(5*time.Second)),
+		TurnOff:                 make(chan struct{}, 1),
+		NodePoolWait:            make(map[ID]chan struct{}, 1),
+		IndexPool:               make(map[ID]*time.Ticker),
+		VoteUpdate:              VoteUpdate{Done: true},
+		WaitRequest:             make(chan any, _messageBufferSise),
+		HasConnects:             map[ID]bool{},
 	}
 	for node := range nodes {
 		n.Nodes[node.Id] = node
@@ -172,7 +172,7 @@ loop:
 }
 
 func (n *Node) LeaderDead(timeNow time.Time) bool {
-	return !n.LeaderHeartDeadline.IsZero() && n.LeaderHeartDeadline.Before(timeNow)
+	return !n.LeaderHeartBeatDeadline.IsZero() && n.LeaderHeartBeatDeadline.Before(timeNow)
 }
 
 func (n *Node) Send(sms Message) {
@@ -232,12 +232,12 @@ func (n *Node) retryRequestVotes() {
 }
 
 func (n *Node) addDeadline2(timeNow time.Time) {
-	delta := n.LeaderHeartDeadline.Sub(timeNow)
+	delta := n.LeaderHeartBeatDeadline.Sub(timeNow)
 	if (n.MaxDelta-delta)/4 == 0 {
 		return
 	}
 	r := rand.N(2*time.Second) / _factor * 4
-	n.LeaderHeartDeadline = n.LeaderHeartDeadline.Add(r)
+	n.LeaderHeartBeatDeadline = n.LeaderHeartBeatDeadline.Add(r)
 }
 
 func randDelta() time.Duration {
@@ -255,7 +255,7 @@ func (n *Node) updateTerm(term int, timeNow time.Time) {
 	n.Voted = false
 	n.SetRole(Follower)
 	n.MaxDelta = randDelta()
-	n.LeaderHeartDeadline = timeNow.Add(n.MaxDelta)
+	n.LeaderHeartBeatDeadline = timeNow.Add(n.MaxDelta)
 }
 
 func (n *Node) Request(s any) {
