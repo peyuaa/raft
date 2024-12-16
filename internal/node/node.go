@@ -15,15 +15,14 @@ import (
 	raftmap "github.com/peyuaa/raft/internal/map"
 )
 
-type (
-	ID         fmt.Stringer
-	VoteUpdate struct {
-		Entry []Entry[any]
-		Count int
-		Nodes map[ID]bool
-		Done  bool
-	}
-)
+type VoteUpdate struct {
+	Entry []Entry[any]
+	Count int
+	Nodes map[ID]bool
+	Done  bool
+}
+
+type ID fmt.Stringer
 
 func NewVoteUpdate(entry []Entry[any]) VoteUpdate {
 	return VoteUpdate{
