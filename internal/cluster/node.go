@@ -109,7 +109,7 @@ func NewNode(nodes iter.Seq[*Node]) *Node {
 func (n *Node) Run(ctx context.Context) error {
 	defer func() {
 		if r := recover(); r != nil {
-			panic(fmt.Sprintf("id:%v, panic: %v", n.id, r))
+			panic(fmt.Sprintf("id: %v, panic: %v", n.id, r))
 		}
 	}()
 	ticker := time.NewTicker(time.Second / _factor)
