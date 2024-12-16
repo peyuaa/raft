@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/peyuaa/raft/internal/node"
 )
 
 func TestRaft(t *testing.T) {
@@ -22,7 +24,7 @@ func TestRaft(t *testing.T) {
 	}()
 	time.Sleep(3 * time.Second)
 
-	var leader *Node
+	var leader *node.Node
 	require.Eventually(t, func() bool {
 		leader = findLeader(raft)
 		return leader != nil
@@ -71,7 +73,7 @@ func TestLog(t *testing.T) {
 	}()
 	time.Sleep(3 * time.Second)
 
-	var leader *Node
+	var leader *node.Node
 	require.Eventually(t, func() bool {
 		leader = findLeader(raft)
 		return leader != nil
@@ -90,20 +92,20 @@ func TestLog(t *testing.T) {
 	time.Sleep(3 * time.Second)
 	<-first.TurnOff
 	time.Sleep(3 * time.Second)
-	for _, node := range raft.Nodes {
-		t.Log(node.Journal.Get(1))
-		t.Log(node.Journal.Len())
+	for _, raftNode := range raft.Nodes {
+		t.Log(raftNode.Journal.Get(1))
+		t.Log(raftNode.Journal.Len())
 	}
 	cancel()
 	<-done
 }
 
-func findLeader(raft *Cluster) (n *Node) {
+func findLeader(raft *Cluster) (n *node.Node) {
 	maxTerm := -2
-	for _, node := range raft.Nodes {
-		if node.Role == Leader && node.Term > maxTerm {
-			n = node
-			maxTerm = node.Term
+	for _, raftNode := range raft.Nodes {
+		if raftNode.Role == node.Leader && raftNode.Term > maxTerm {
+			n = raftNode
+			maxTerm = raftNode.Term
 		}
 	}
 	return
