@@ -19,7 +19,7 @@ import (
 
 type (
 	ID         fmt.Stringer
-	SMS        = message.Message
+	Message    = message.Message
 	VoteUpdate struct {
 		Entry []message.Entry[any]
 		Count int
@@ -55,7 +55,7 @@ type Node struct {
 	votePool            map[ID]bool
 	maxDelta            time.Duration
 	leaderHeartDeadline time.Time
-	messages            chan SMS
+	messages            chan Message
 	updaters            chan any
 	indexPool           map[ID]*time.Ticker
 	nodePoolWait        map[ID]chan struct{}
@@ -83,7 +83,7 @@ func NewNode(nodes iter.Seq[*Node]) *Node {
 		role:                Follower,
 		nodes:               make(map[ID]*Node),
 		votePool:            make(map[ID]bool),
-		messages:            make(chan SMS, _messageBufferSise),
+		messages:            make(chan Message, _messageBufferSise),
 		updaters:            make(chan any, _messageBufferSise),
 		logger:              log.New(os.Stdout),
 		maxDelta:            randDelta(),
@@ -179,7 +179,7 @@ func (n *Node) IsLeaderDead(timeNow time.Time) bool {
 	return !n.leaderHeartDeadline.IsZero() && n.leaderHeartDeadline.Before(timeNow)
 }
 
-func (n *Node) Send(sms SMS) {
+func (n *Node) Send(sms Message) {
 	n.messages <- sms
 }
 
