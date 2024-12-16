@@ -68,8 +68,8 @@ type Node struct {
 	TurnOffBool bool
 }
 
-const _messageBufferSise = 1000
-const _factor = 16
+const messageBufferSise = 1000
+const factor = 16
 
 func NewNode(nodes iter.Seq[*Node]) *Node {
 	n := &Node{
@@ -79,8 +79,8 @@ func NewNode(nodes iter.Seq[*Node]) *Node {
 		Role:                    Follower,
 		Nodes:                   make(map[ID]*Node),
 		VotePool:                make(map[ID]bool),
-		Messages:                make(chan Message, _messageBufferSise),
-		Updaters:                make(chan any, _messageBufferSise),
+		Messages:                make(chan Message, messageBufferSise),
+		Updaters:                make(chan any, messageBufferSise),
 		Logger:                  log.New(os.Stdout),
 		MaxDelta:                randDelta(),
 		LeaderHeartBeatDeadline: time.Now().Add(time.Second + rand.N(5*time.Second)),
@@ -88,7 +88,7 @@ func NewNode(nodes iter.Seq[*Node]) *Node {
 		NodePoolWait:            make(map[ID]chan struct{}, 1),
 		IndexPool:               make(map[ID]*time.Ticker),
 		VoteUpdate:              VoteUpdate{Done: true},
-		WaitRequest:             make(chan any, _messageBufferSise),
+		WaitRequest:             make(chan any, messageBufferSise),
 		HasConnects:             map[ID]bool{},
 	}
 	for node := range nodes {
@@ -96,7 +96,7 @@ func NewNode(nodes iter.Seq[*Node]) *Node {
 		n.Nodes[node.Id] = node
 		n.HasConnects[node.Id] = true
 		node.HasConnects[n.Id] = true
-		n.IndexPool[node.Id] = time.NewTicker(time.Second / _factor / 2)
+		n.IndexPool[node.Id] = time.NewTicker(time.Second / factor / 2)
 		n.VotePool[node.Id] = false
 	}
 	return n
@@ -108,7 +108,7 @@ func (n *Node) Run(ctx context.Context) error {
 			panic(fmt.Sprintf("Id: %v, panic: %v", n.Id, r))
 		}
 	}()
-	ticker := time.NewTicker(time.Second / _factor)
+	ticker := time.NewTicker(time.Second / factor)
 
 loop:
 	for {
@@ -205,7 +205,7 @@ func (n *Node) Add(node *Node) error {
 	}
 	n.Nodes[node.Id] = node
 	n.VotePool[node.Id] = false
-	n.IndexPool[node.Id] = time.NewTicker(time.Second / _factor)
+	n.IndexPool[node.Id] = time.NewTicker(time.Second / factor)
 	n.HasConnects[node.Id] = true
 	node.HasConnects[n.Id] = true
 
@@ -236,7 +236,7 @@ func (n *Node) addDeadline2(timeNow time.Time) {
 	if (n.MaxDelta-delta)/4 == 0 {
 		return
 	}
-	r := rand.N(2*time.Second) / _factor * 4
+	r := rand.N(2*time.Second) / factor * 4
 	n.LeaderHeartBeatDeadline = n.LeaderHeartBeatDeadline.Add(r)
 }
 
