@@ -193,8 +193,8 @@ func (n *Node) LeaderDead(timeNow time.Time) bool {
 	return !n.LeaderHeartBeatDeadline.IsZero() && n.LeaderHeartBeatDeadline.Before(timeNow)
 }
 
-func (n *Node) Send(sms Message) {
-	n.Messages <- sms
+func (n *Node) Send(msg Message) {
+	n.Messages <- msg
 }
 
 func (n *Node) Election(timeNow time.Time) {
