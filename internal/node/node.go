@@ -130,20 +130,8 @@ loop:
 			if msg.GetTerm() < n.Term {
 				break
 			}
-			switch v := msg.(type) {
-			case RequestVote:
-				n.requestVoteHandle(v, now)
-			case Vote:
-				n.voteHandler(v)
-			case AppendEntries:
-				n.appendEntriesHandler(v, now)
-			case AppendEntriesResponse:
-				if n.Role != Leader {
-					continue
-				}
-				<-n.IndexPool[msg.GetFrom()].C
-				n.appendEntriesResponseHandler(v)
-			}
+
+			n.handleMessage(msg, now)
 		case <-ticker.C:
 			if n.Role == Leader {
 				for _, node := range n.Nodes {
@@ -169,6 +157,23 @@ loop:
 		}
 	}
 	return nil
+}
+
+func (n *Node) handleMessage(msg Message, time time.Time) {
+	switch v := msg.(type) {
+	case RequestVote:
+		n.requestVoteHandle(v, time)
+	case Vote:
+		n.voteHandler(v)
+	case AppendEntries:
+		n.appendEntriesHandler(v, time)
+	case AppendEntriesResponse:
+		if n.Role != Leader {
+			return
+		}
+		<-n.IndexPool[msg.GetFrom()].C
+		n.appendEntriesResponseHandler(v)
+	}
 }
 
 func (n *Node) LeaderDead(timeNow time.Time) bool {
