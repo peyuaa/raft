@@ -91,7 +91,6 @@ func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time
 			})
 		}
 		if n.journal.PrevIndex() > n.journal.CommitIndex() {
-			n.logger.Infof(">>>")
 			if n.journal.Commit() {
 				n.nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
 					From:       n.id.String(),
@@ -106,7 +105,6 @@ func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time
 		}
 	}
 	if msg.CommitIndex == n.journal.CommitIndex() && n.journal.Get(n.journal.CommitIndex()).Term == msg.PrevTerm {
-		n.logger.Infof("===")
 		if len(msg.Entries) > 0 {
 			_ = n.journal.Put(journal.Message{
 				Term:  msg.Term,
@@ -123,7 +121,6 @@ func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time
 		})
 		return
 	}
-	n.logger.Infof("<<<")
 	n.nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
 		From:       n.id.String(),
 		To:         msg.From,
@@ -136,7 +133,6 @@ func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time
 func (n *Node) appendEntriesResponseHandler(msg message.AppendEntriesResponse) {
 	if msg.Success {
 		if msg.MatchIndex < n.journal.CommitIndex() {
-			n.logger.Info("<<<<<<")
 			n.nodes[msg.GetFrom()].Send(message.AppendEntries{
 				From:        n.id.String(),
 				To:          msg.From,
@@ -154,7 +150,6 @@ func (n *Node) appendEntriesResponseHandler(msg message.AppendEntriesResponse) {
 			return
 		}
 		if msg.MatchIndex == n.journal.CommitIndex() {
-			n.logger.Info("======")
 			var entries []entry
 			if n.voteUpdate.Done {
 				select {
@@ -181,7 +176,6 @@ func (n *Node) appendEntriesResponseHandler(msg message.AppendEntriesResponse) {
 					entries = n.voteUpdate.Entry
 				}
 			}
-			n.logger.Info("!!======!!")
 			n.nodes[msg.GetFrom()].Send(message.AppendEntries{
 				From:        n.id.String(),
 				To:          msg.From,
