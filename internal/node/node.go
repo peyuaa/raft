@@ -119,19 +119,14 @@ loop:
 		case <-ctx.Done():
 			break loop
 		case msg := <-n.Messages:
-			now := time.Now()
+			timestamp := time.Now()
 			n.Logger.Infof("%v: got message `%s`", n.Id, msg)
-			if msg.GetTo() != n.Id {
-				break
-			}
-			if !n.HasConnects[msg.GetFrom()] {
-				break
-			}
-			if msg.GetTerm() < n.Term {
+
+			if n.messageInvalid(msg) {
 				break
 			}
 
-			n.handleMessage(msg, now)
+			n.handleMessage(msg, timestamp)
 		case <-ticker.C:
 			if n.Role == Leader {
 				for _, node := range n.Nodes {
@@ -157,6 +152,20 @@ loop:
 		}
 	}
 	return nil
+}
+
+func (n *Node) messageInvalid(msg Message) bool {
+	if msg.GetTo() != n.Id {
+		return true
+	}
+	if !n.HasConnects[msg.GetFrom()] {
+		return true
+	}
+	if msg.GetTerm() < n.Term {
+		return true
+	}
+
+	return false
 }
 
 func (n *Node) handleMessage(msg Message, time time.Time) {
