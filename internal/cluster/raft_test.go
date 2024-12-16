@@ -29,10 +29,10 @@ func TestRaft(t *testing.T) {
 	}, 5*time.Second, 100*time.Millisecond)
 
 	firstLeader := leader
-	t.Log(firstLeader.id)
+	t.Log(firstLeader.Id)
 
 	// turn off first leader
-	firstLeader.turnOff <- struct{}{}
+	firstLeader.TurnOff <- struct{}{}
 	time.Sleep(15 * time.Second)
 	require.Eventually(t, func() bool {
 		leader = findLeader(raft)
@@ -40,16 +40,16 @@ func TestRaft(t *testing.T) {
 	}, 5*time.Second, 100*time.Millisecond)
 
 	secondLeader := leader
-	t.Log(secondLeader.id)
+	t.Log(secondLeader.Id)
 
-	require.NotEqual(t, firstLeader.id, secondLeader.id)
-	require.NotEqual(t, firstLeader.term, secondLeader.term)
+	require.NotEqual(t, firstLeader.Id, secondLeader.Id)
+	require.NotEqual(t, firstLeader.Term, secondLeader.Term)
 
 	// turn on first leader
-	<-firstLeader.turnOff
+	<-firstLeader.TurnOff
 
 	require.Eventually(t, func() bool {
-		return firstLeader.term == secondLeader.term
+		return firstLeader.Term == secondLeader.Term
 	}, 2*time.Second, 100*time.Millisecond)
 
 	cancel()
@@ -80,7 +80,7 @@ func TestLog(t *testing.T) {
 	leader.Request("aboba")
 	first := leader
 	time.Sleep(3 * time.Second)
-	leader.turnOff <- struct{}{}
+	leader.TurnOff <- struct{}{}
 	time.Sleep(7 * time.Second)
 	require.Eventually(t, func() bool {
 		leader = findLeader(raft)
@@ -88,11 +88,11 @@ func TestLog(t *testing.T) {
 	}, 5*time.Second, 100*time.Millisecond)
 	leader.Request("aboba2")
 	time.Sleep(3 * time.Second)
-	<-first.turnOff
+	<-first.TurnOff
 	time.Sleep(3 * time.Second)
-	for _, node := range raft.nodes {
-		t.Log(node.journal.Get(1))
-		t.Log(node.journal.Len())
+	for _, node := range raft.Nodes {
+		t.Log(node.Journal.Get(1))
+		t.Log(node.Journal.Len())
 	}
 	cancel()
 	<-done
@@ -100,10 +100,10 @@ func TestLog(t *testing.T) {
 
 func findLeader(raft *Cluster) (n *Node) {
 	maxTerm := -2
-	for _, node := range raft.nodes {
-		if node.role == Leader && node.term > maxTerm {
+	for _, node := range raft.Nodes {
+		if node.Role == Leader && node.Term > maxTerm {
 			n = node
-			maxTerm = node.term
+			maxTerm = node.Term
 		}
 	}
 	return

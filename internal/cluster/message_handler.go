@@ -10,13 +10,13 @@ import (
 type entry = message.Entry[any]
 
 func (n *Node) requestVoteHandle(msg message.RequestVote, timeNow time.Time) {
-	to := n.nodes[msg.GetFrom()]
+	to := n.Nodes[msg.GetFrom()]
 
-	if msg.GetTerm() <= n.term { // if we don't need to update term
+	if msg.GetTerm() <= n.Term { // if we don't need to update Term
 		to.Send(message.Vote{
-			From:        n.id.String(),
-			To:          to.id.String(),
-			Term:        n.term,
+			From:        n.Id.String(),
+			To:          to.Id.String(),
+			Term:        n.Term,
 			VoteGranted: false,
 		})
 		return
@@ -24,17 +24,17 @@ func (n *Node) requestVoteHandle(msg message.RequestVote, timeNow time.Time) {
 
 	granted := true
 
-	if n.voted {
+	if n.Voted {
 		granted = false
 	}
-	n.voted = true
+	n.Voted = true
 
 	n.updateTerm(msg.GetTerm(), timeNow)
 
 	vote := message.Vote{
-		From:        n.id.String(),
-		To:          to.id.String(),
-		Term:        n.term,
+		From:        n.Id.String(),
+		To:          to.Id.String(),
+		Term:        n.Term,
 		VoteGranted: granted,
 	}
 
@@ -42,33 +42,33 @@ func (n *Node) requestVoteHandle(msg message.RequestVote, timeNow time.Time) {
 }
 
 func (n *Node) voteHandler(msg message.Vote) {
-	if n.role == Leader {
+	if n.Role == Leader {
 		return
 	}
-	if n.votePool[msg.GetFrom()] {
+	if n.VotePool[msg.GetFrom()] {
 		return
 	}
-	n.votePool[msg.GetFrom()] = true
-	if msg.Term != n.term {
+	n.VotePool[msg.GetFrom()] = true
+	if msg.Term != n.Term {
 		return
 	}
 
 	if msg.VoteGranted {
-		n.currentVotes++
+		n.CurrentVotes++
 	}
-	n.logger.Infof("%v: got `%d`", n.id, n.currentVotes)
-	if n.currentVotes >= (len(n.votePool)+1)/2 {
-		n.logger.Infof("a leader is %v", n.id)
+	n.Logger.Infof("%v: got `%d`", n.Id, n.CurrentVotes)
+	if n.CurrentVotes >= (len(n.VotePool)+1)/2 {
+		n.Logger.Infof("a leader is %v", n.Id)
 		n.SetRole(Leader)
-		n.leaderHeartDeadline = time.Time{}
-		for _, node := range n.nodes {
+		n.LeaderHeartDeadline = time.Time{}
+		for _, node := range n.Nodes {
 			node.Send(message.AppendEntries{
-				From:        n.id.String(),
-				To:          node.id.String(),
-				Term:        n.term,
-				PrevIndex:   n.journal.PrevIndex(),
-				PrevTerm:    n.journal.Get(n.journal.PrevIndex()).Term,
-				CommitIndex: n.journal.CommitIndex(),
+				From:        n.Id.String(),
+				To:          node.Id.String(),
+				Term:        n.Term,
+				PrevIndex:   n.Journal.PrevIndex(),
+				PrevTerm:    n.Journal.Get(n.Journal.PrevIndex()).Term,
+				CommitIndex: n.Journal.CommitIndex(),
 				Entries:     nil,
 			})
 		}
@@ -77,54 +77,54 @@ func (n *Node) voteHandler(msg message.Vote) {
 
 func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time) {
 	n.updateTerm(msg.GetTerm(), timeNow)
-	n.voted = false
+	n.Voted = false
 
-	if n.term < msg.Term {
-		n.term = msg.Term
+	if n.Term < msg.Term {
+		n.Term = msg.Term
 	}
-	if msg.CommitIndex > n.journal.CommitIndex() {
+	if msg.CommitIndex > n.Journal.CommitIndex() {
 		if len(msg.Entries) != 0 {
-			_ = n.journal.Put(journal.Message{
+			_ = n.Journal.Put(journal.Message{
 				Term:  msg.Term,
 				Index: msg.PrevIndex,
 				Data:  msg.Entries[0].Data,
 			})
 		}
-		if n.journal.PrevIndex() > n.journal.CommitIndex() {
-			if n.journal.Commit() {
-				n.nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
-					From:       n.id.String(),
+		if n.Journal.PrevIndex() > n.Journal.CommitIndex() {
+			if n.Journal.Commit() {
+				n.Nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
+					From:       n.Id.String(),
 					To:         msg.From,
-					Term:       n.term,
+					Term:       n.Term,
 					Success:    true,
-					MatchIndex: n.journal.CommitIndex(),
+					MatchIndex: n.Journal.CommitIndex(),
 				})
 				return
 			}
 
 		}
 	}
-	if msg.CommitIndex == n.journal.CommitIndex() && n.journal.Get(n.journal.CommitIndex()).Term == msg.PrevTerm {
+	if msg.CommitIndex == n.Journal.CommitIndex() && n.Journal.Get(n.Journal.CommitIndex()).Term == msg.PrevTerm {
 		if len(msg.Entries) > 0 {
-			_ = n.journal.Put(journal.Message{
+			_ = n.Journal.Put(journal.Message{
 				Term:  msg.Term,
-				Index: n.journal.Len(),
+				Index: n.Journal.Len(),
 				Data:  msg.Entries[0].Data,
 			})
 		}
-		n.nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
-			From:       n.id.String(),
+		n.Nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
+			From:       n.Id.String(),
 			To:         msg.From,
-			Term:       n.term,
+			Term:       n.Term,
 			Success:    true,
-			MatchIndex: n.journal.PrevIndex(),
+			MatchIndex: n.Journal.PrevIndex(),
 		})
 		return
 	}
-	n.nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
-		From:       n.id.String(),
+	n.Nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
+		From:       n.Id.String(),
 		To:         msg.From,
-		Term:       n.term,
+		Term:       n.Term,
 		Success:    false,
 		MatchIndex: msg.PrevIndex,
 	})
@@ -132,92 +132,92 @@ func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time
 
 func (n *Node) appendEntriesResponseHandler(msg message.AppendEntriesResponse) {
 	if msg.Success {
-		if msg.MatchIndex < n.journal.CommitIndex() {
-			n.nodes[msg.GetFrom()].Send(message.AppendEntries{
-				From:        n.id.String(),
+		if msg.MatchIndex < n.Journal.CommitIndex() {
+			n.Nodes[msg.GetFrom()].Send(message.AppendEntries{
+				From:        n.Id.String(),
 				To:          msg.From,
-				Term:        n.term,
+				Term:        n.Term,
 				PrevIndex:   msg.MatchIndex + 1,
-				PrevTerm:    n.journal.Get(msg.MatchIndex + 1).Term,
-				CommitIndex: n.journal.CommitIndex(),
+				PrevTerm:    n.Journal.Get(msg.MatchIndex + 1).Term,
+				CommitIndex: n.Journal.CommitIndex(),
 				Entries: []entry{
 					{
-						Term: n.journal.Get(msg.MatchIndex + 1).Term,
-						Data: n.journal.Get(msg.MatchIndex + 1).Data,
+						Term: n.Journal.Get(msg.MatchIndex + 1).Term,
+						Data: n.Journal.Get(msg.MatchIndex + 1).Data,
 					},
 				},
 			})
 			return
 		}
-		if msg.MatchIndex == n.journal.CommitIndex() {
+		if msg.MatchIndex == n.Journal.CommitIndex() {
 			var entries []entry
-			if n.voteUpdate.Done {
+			if n.VoteUpdate.Done {
 				select {
-				case v := <-n.updaters:
+				case v := <-n.Updaters:
 					entries = append(entries, entry{
-						Term: n.term,
+						Term: n.Term,
 						Data: v,
 					})
 
-					err := n.journal.Put(journal.Message{
-						Term:  n.term,
-						Index: n.journal.Len(),
+					err := n.Journal.Put(journal.Message{
+						Term:  n.Term,
+						Index: n.Journal.Len(),
 						Data:  v,
 					})
 					if err != nil {
-						n.logger.Error("unable to put message in the journal: %v", err)
+						n.Logger.Error("unable to put message in the Journal: %v", err)
 					}
 
-					n.voteUpdate = NewVoteUpdate(entries)
+					n.VoteUpdate = NewVoteUpdate(entries)
 				default:
 				}
 			} else {
-				if !n.voteUpdate.Nodes[msg.GetFrom()] {
-					entries = n.voteUpdate.Entry
+				if !n.VoteUpdate.Nodes[msg.GetFrom()] {
+					entries = n.VoteUpdate.Entry
 				}
 			}
-			n.nodes[msg.GetFrom()].Send(message.AppendEntries{
-				From:        n.id.String(),
+			n.Nodes[msg.GetFrom()].Send(message.AppendEntries{
+				From:        n.Id.String(),
 				To:          msg.From,
-				Term:        n.term,
+				Term:        n.Term,
 				PrevIndex:   msg.MatchIndex,
-				PrevTerm:    n.journal.Get(msg.MatchIndex).Term,
-				CommitIndex: n.journal.CommitIndex(),
+				PrevTerm:    n.Journal.Get(msg.MatchIndex).Term,
+				CommitIndex: n.Journal.CommitIndex(),
 				Entries:     entries,
 			})
 
 			return
 		}
-		if !n.voteUpdate.Nodes[msg.GetFrom()] {
-			n.voteUpdate.Nodes[msg.GetFrom()] = true
-			n.voteUpdate.Count++
-			if n.voteUpdate.Count >= (len(n.nodes)+1)/2 {
-				n.voteUpdate.Done = true
-				n.journal.Commit()
+		if !n.VoteUpdate.Nodes[msg.GetFrom()] {
+			n.VoteUpdate.Nodes[msg.GetFrom()] = true
+			n.VoteUpdate.Count++
+			if n.VoteUpdate.Count >= (len(n.Nodes)+1)/2 {
+				n.VoteUpdate.Done = true
+				n.Journal.Commit()
 			}
 		}
-		n.nodes[msg.GetFrom()].Send(message.AppendEntries{
-			From:        n.id.String(),
+		n.Nodes[msg.GetFrom()].Send(message.AppendEntries{
+			From:        n.Id.String(),
 			To:          msg.From,
-			Term:        n.term,
+			Term:        n.Term,
 			PrevIndex:   msg.MatchIndex,
-			PrevTerm:    n.journal.Get(msg.MatchIndex).Term,
-			CommitIndex: n.journal.CommitIndex(),
+			PrevTerm:    n.Journal.Get(msg.MatchIndex).Term,
+			CommitIndex: n.Journal.CommitIndex(),
 			Entries:     nil,
 		})
 		return
 	}
-	n.nodes[msg.GetFrom()].Send(message.AppendEntries{
-		From:        n.id.String(),
+	n.Nodes[msg.GetFrom()].Send(message.AppendEntries{
+		From:        n.Id.String(),
 		To:          msg.From,
-		Term:        n.term,
+		Term:        n.Term,
 		PrevIndex:   msg.MatchIndex - 1,
-		PrevTerm:    n.journal.Get(msg.MatchIndex - 1).Term,
-		CommitIndex: n.journal.CommitIndex(),
+		PrevTerm:    n.Journal.Get(msg.MatchIndex - 1).Term,
+		CommitIndex: n.Journal.CommitIndex(),
 		Entries: []entry{
 			{
-				Term: n.journal.Get(msg.MatchIndex - 1).Term,
-				Data: n.journal.Get(msg.MatchIndex - 1).Data,
+				Term: n.Journal.Get(msg.MatchIndex - 1).Term,
+				Data: n.Journal.Get(msg.MatchIndex - 1).Data,
 			},
 		},
 	})

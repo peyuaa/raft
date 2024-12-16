@@ -1,4 +1,4 @@
-package cluster
+package handler
 
 type NodeResponse struct {
 	Id         string `json:"id"`

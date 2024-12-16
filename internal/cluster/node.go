@@ -9,12 +9,11 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
+	"github.com/google/uuid"
 
 	"github.com/peyuaa/raft/internal/cluster/message"
 	"github.com/peyuaa/raft/internal/journal"
 	raftmap "github.com/peyuaa/raft/internal/map"
-
-	"github.com/google/uuid"
 )
 
 type (
@@ -46,30 +45,30 @@ const (
 )
 
 type Node struct {
-	id                  ID
-	term                int
-	role                Role
-	nodes               map[ID]*Node
-	voted               bool
-	currentVotes        int
-	votePool            map[ID]bool
-	maxDelta            time.Duration
-	leaderHeartDeadline time.Time
-	messages            chan Message
-	updaters            chan any
-	indexPool           map[ID]*time.Ticker
-	nodePoolWait        map[ID]chan struct{}
-	voteUpdate          VoteUpdate
-	waitRequest         chan any
-	hasConnects         map[ID]bool
+	Id                  ID
+	Term                int
+	Role                Role
+	Nodes               map[ID]*Node
+	Voted               bool
+	CurrentVotes        int
+	VotePool            map[ID]bool
+	MaxDelta            time.Duration
+	LeaderHeartDeadline time.Time
+	Messages            chan Message
+	Updaters            chan any
+	IndexPool           map[ID]*time.Ticker
+	NodePoolWait        map[ID]chan struct{}
+	VoteUpdate          VoteUpdate
+	WaitRequest         chan any
+	HasConnects         map[ID]bool
 
-	journal *journal.Journal
+	Journal *journal.Journal
 
-	logger *log.Logger
+	Logger *log.Logger
 
 	// debug only
-	turnOff     chan struct{}
-	turnOffBool bool
+	TurnOff     chan struct{}
+	TurnOffBool bool
 }
 
 const _messageBufferSise = 1000
@@ -77,31 +76,31 @@ const _factor = 16
 
 func NewNode(nodes iter.Seq[*Node]) *Node {
 	n := &Node{
-		id:                  uuid.New(),
-		journal:             journal.NewJournal(raftmap.New[any, any]()),
-		term:                -1,
-		role:                Follower,
-		nodes:               make(map[ID]*Node),
-		votePool:            make(map[ID]bool),
-		messages:            make(chan Message, _messageBufferSise),
-		updaters:            make(chan any, _messageBufferSise),
-		logger:              log.New(os.Stdout),
-		maxDelta:            randDelta(),
-		leaderHeartDeadline: time.Now().Add(time.Second + rand.N(5*time.Second)),
-		turnOff:             make(chan struct{}, 1),
-		nodePoolWait:        make(map[ID]chan struct{}, 1),
-		indexPool:           make(map[ID]*time.Ticker),
-		voteUpdate:          VoteUpdate{Done: true},
-		waitRequest:         make(chan any, _messageBufferSise),
-		hasConnects:         map[ID]bool{},
+		Id:                  uuid.New(),
+		Journal:             journal.NewJournal(raftmap.New[any, any]()),
+		Term:                -1,
+		Role:                Follower,
+		Nodes:               make(map[ID]*Node),
+		VotePool:            make(map[ID]bool),
+		Messages:            make(chan Message, _messageBufferSise),
+		Updaters:            make(chan any, _messageBufferSise),
+		Logger:              log.New(os.Stdout),
+		MaxDelta:            randDelta(),
+		LeaderHeartDeadline: time.Now().Add(time.Second + rand.N(5*time.Second)),
+		TurnOff:             make(chan struct{}, 1),
+		NodePoolWait:        make(map[ID]chan struct{}, 1),
+		IndexPool:           make(map[ID]*time.Ticker),
+		VoteUpdate:          VoteUpdate{Done: true},
+		WaitRequest:         make(chan any, _messageBufferSise),
+		HasConnects:         map[ID]bool{},
 	}
 	for node := range nodes {
-		n.nodes[node.id] = node
-		n.nodes[node.id] = node
-		n.hasConnects[node.id] = true
-		node.hasConnects[n.id] = true
-		n.indexPool[node.id] = time.NewTicker(time.Second / _factor / 2)
-		n.votePool[node.id] = false
+		n.Nodes[node.Id] = node
+		n.Nodes[node.Id] = node
+		n.HasConnects[node.Id] = true
+		node.HasConnects[n.Id] = true
+		n.IndexPool[node.Id] = time.NewTicker(time.Second / _factor / 2)
+		n.VotePool[node.Id] = false
 	}
 	return n
 }
@@ -109,29 +108,29 @@ func NewNode(nodes iter.Seq[*Node]) *Node {
 func (n *Node) Run(ctx context.Context) error {
 	defer func() {
 		if r := recover(); r != nil {
-			panic(fmt.Sprintf("id: %v, panic: %v", n.id, r))
+			panic(fmt.Sprintf("Id: %v, panic: %v", n.Id, r))
 		}
 	}()
 	ticker := time.NewTicker(time.Second / _factor)
 
 loop:
 	for {
-		n.turnOff <- struct{}{}
-		<-n.turnOff
+		n.TurnOff <- struct{}{}
+		<-n.TurnOff
 
 		select {
 		case <-ctx.Done():
 			break loop
-		case msg := <-n.messages:
+		case msg := <-n.Messages:
 			now := time.Now()
-			n.logger.Infof("%v: got message `%s`", n.id, msg)
-			if msg.GetTo() != n.id {
+			n.Logger.Infof("%v: got message `%s`", n.Id, msg)
+			if msg.GetTo() != n.Id {
 				break
 			}
-			if !n.hasConnects[msg.GetFrom()] {
+			if !n.HasConnects[msg.GetFrom()] {
 				break
 			}
-			if msg.GetTerm() < n.term {
+			if msg.GetTerm() < n.Term {
 				break
 			}
 			switch v := msg.(type) {
@@ -142,25 +141,25 @@ loop:
 			case message.AppendEntries:
 				n.appendEntriesHandler(v, now)
 			case message.AppendEntriesResponse:
-				if n.role != Leader {
+				if n.Role != Leader {
 					continue
 				}
-				<-n.indexPool[msg.GetFrom()].C
+				<-n.IndexPool[msg.GetFrom()].C
 				n.appendEntriesResponseHandler(v)
 			}
 		case <-ticker.C:
-			if n.role == Leader {
-				for _, node := range n.nodes {
+			if n.Role == Leader {
+				for _, node := range n.Nodes {
 					select {
-					case v := <-node.waitRequest:
-						n.updaters <- v
+					case v := <-node.WaitRequest:
+						n.Updaters <- v
 					default:
 					}
 				}
 			}
 			now := time.Now()
 
-			if n.role == Candidate {
+			if n.Role == Candidate {
 				n.retryRequestVotes()
 				break
 			}
@@ -176,72 +175,72 @@ loop:
 }
 
 func (n *Node) LeaderDead(timeNow time.Time) bool {
-	return !n.leaderHeartDeadline.IsZero() && n.leaderHeartDeadline.Before(timeNow)
+	return !n.LeaderHeartDeadline.IsZero() && n.LeaderHeartDeadline.Before(timeNow)
 }
 
 func (n *Node) Send(sms Message) {
-	n.messages <- sms
+	n.Messages <- sms
 }
 
 func (n *Node) Election(timeNow time.Time) {
-	n.logger.Infof("%v: election", n.id)
-	n.currentVotes = 0
+	n.Logger.Infof("%v: election", n.Id)
+	n.CurrentVotes = 0
 	n.clearVotePool()
-	n.updateTerm(n.term+1, timeNow)
+	n.updateTerm(n.Term+1, timeNow)
 	go func() {
-		for _, node := range n.nodes {
+		for _, node := range n.Nodes {
 			node.Send(message.RequestVote{
-				From: n.id.String(),
-				To:   node.id.String(),
-				Term: n.term,
+				From: n.Id.String(),
+				To:   node.Id.String(),
+				Term: n.Term,
 			})
 		}
 	}()
 }
 
 func (n *Node) SetRole(role Role) {
-	n.role = role
+	n.Role = role
 }
 
 func (n *Node) Add(node *Node) error {
-	if _, ok := n.nodes[node.id]; ok {
-		return fmt.Errorf("node `%v` already exists", node.id)
+	if _, ok := n.Nodes[node.Id]; ok {
+		return fmt.Errorf("node `%v` already exists", node.Id)
 	}
-	n.nodes[node.id] = node
-	n.votePool[node.id] = false
-	n.indexPool[node.id] = time.NewTicker(time.Second / _factor)
-	n.hasConnects[node.id] = true
-	node.hasConnects[n.id] = true
+	n.Nodes[node.Id] = node
+	n.VotePool[node.Id] = false
+	n.IndexPool[node.Id] = time.NewTicker(time.Second / _factor)
+	n.HasConnects[node.Id] = true
+	node.HasConnects[n.Id] = true
 
 	return nil
 }
 
 func (n *Node) clearVotePool() {
-	for id := range n.votePool {
-		n.votePool[id] = false
+	for id := range n.VotePool {
+		n.VotePool[id] = false
 	}
 }
 
 func (n *Node) retryRequestVotes() {
-	for id := range n.votePool {
-		if n.voted {
+	for id := range n.VotePool {
+		if n.Voted {
 			continue
 		}
-		n.nodes[id].Send(message.RequestVote{
-			From: n.id.String(),
+		n.Nodes[id].Send(message.RequestVote{
+			From: n.Id.String(),
 			To:   id.String(),
-			Term: n.term,
+			Term: n.Term,
 		})
 	}
 }
 
 func (n *Node) addDeadline2(timeNow time.Time) {
-	delta := n.leaderHeartDeadline.Sub(timeNow)
-	if (n.maxDelta-delta)/4 == 0 {
+	delta := n.LeaderHeartDeadline.Sub(timeNow)
+	if (n.MaxDelta-delta)/4 == 0 {
 		return
 	}
 	r := rand.N(2*time.Second) / _factor * 4
-	n.leaderHeartDeadline = n.leaderHeartDeadline.Add(r)
+	n.LeaderHeartDeadline = n.LeaderHeartDeadline.Add(r)
 }
 
 func randDelta() time.Duration {
@@ -249,49 +248,49 @@ func randDelta() time.Duration {
 }
 
 func (n *Node) updateTerm(term int, timeNow time.Time) {
-	if n.term > term {
+	if n.Term > term {
 		return
 	}
-	if n.term == term {
+	if n.Term == term {
 		n.addDeadline2(timeNow)
 	}
-	n.term = term
-	n.voted = false
+	n.Term = term
+	n.Voted = false
 	n.SetRole(Follower)
-	n.maxDelta = randDelta()
-	n.leaderHeartDeadline = timeNow.Add(n.maxDelta)
+	n.MaxDelta = randDelta()
+	n.LeaderHeartDeadline = timeNow.Add(n.MaxDelta)
 }
 
 func (n *Node) Request(s any) {
-	if n.role == Leader {
-		n.updaters <- s
+	if n.Role == Leader {
+		n.Updaters <- s
 		return
 	}
-	n.waitRequest <- s
+	n.WaitRequest <- s
 }
 
 func (n *Node) Disconnect(id ID) bool {
-	if _, ok := n.hasConnects[id]; !ok {
+	if _, ok := n.HasConnects[id]; !ok {
 		return false
 	}
-	if _, ok := n.nodes[id].hasConnects[n.id]; !ok {
+	if _, ok := n.Nodes[id].HasConnects[n.Id]; !ok {
 		return false
 	}
-	n.hasConnects[id] = false
-	n.nodes[id].hasConnects[n.id] = false
+	n.HasConnects[id] = false
+	n.Nodes[id].HasConnects[n.Id] = false
 
 	return true
 }
 
 func (n *Node) Connect(id ID) bool {
-	if _, ok := n.hasConnects[id]; !ok {
+	if _, ok := n.HasConnects[id]; !ok {
 		return false
 	}
-	if _, ok := n.nodes[id].hasConnects[n.id]; !ok {
+	if _, ok := n.Nodes[id].HasConnects[n.Id]; !ok {
 		return false
 	}
-	n.hasConnects[id] = true
-	n.nodes[id].hasConnects[n.id] = true
+	n.HasConnects[id] = true
+	n.Nodes[id].HasConnects[n.Id] = true
 
 	return true
 }
