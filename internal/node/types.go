@@ -7,7 +7,7 @@ import (
 )
 
 type Message interface {
-	fmt.Stringer
+	String() string
 	GetTerm() int
 	GetFrom() uuid.UUID
 	GetTo() uuid.UUID
