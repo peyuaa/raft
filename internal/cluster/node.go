@@ -165,7 +165,7 @@ loop:
 				break
 			}
 
-			if n.IsLeaderDead(now) {
+			if n.LeaderDead(now) {
 				n.SetRole(Candidate)
 				go n.Election(now)
 				break
@@ -175,7 +175,7 @@ loop:
 	return nil
 }
 
-func (n *Node) IsLeaderDead(timeNow time.Time) bool {
+func (n *Node) LeaderDead(timeNow time.Time) bool {
 	return !n.leaderHeartDeadline.IsZero() && n.leaderHeartDeadline.Before(timeNow)
 }
 
