@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"iter"
 	"strconv"
+
+	"github.com/charmbracelet/log"
 )
 
 type Message struct {
@@ -30,44 +32,34 @@ type Journal struct {
 }
 
 func NewJournal(processor Processor[any, any]) *Journal {
-	return &Journal{commitIndex: 0, processor: processor, storage: []Message{
-		{
-			Term: -1,
-			Data: []byte{0xDE, 0xAD, 0xBE, 0xEF},
-		},
-	}}
+	return &Journal{commitIndex: -1, processor: processor, storage: []Message{}}
 }
 
 func (j *Journal) Put(m Message) error {
-	// first message
-	if j.Len() == 0 {
-		j.storage = append(j.storage, m)
-		return nil
+	if m.Index != j.Len() {
+		return errors.New("messages must be added sequentially")
 	}
 
-	// append
-	if j.Len() == m.Index {
-		if j.storage[len(j.storage)-1].Term > m.Term {
-			return errors.New("term is greater than msg term")
-		}
-		j.storage = append(j.storage, m)
-		return nil
+	if j.Len() > 0 && j.storage[j.PrevIndex()].Term > m.Term {
+		return errors.New("term of the new message must be greater than or equal to the last term")
 	}
 
-	// put in the middle
-	if j.storage[m.Index].Term >= m.Term {
-		return errors.New("term is greater than msg term")
-	}
-	j.storage[m.Index] = m
+	j.storage = append(j.storage, m)
 	return nil
 }
 
 func (j *Journal) Commit() bool {
-	if j.commitIndex == len(j.storage) {
+	if j.commitIndex+1 >= len(j.storage) {
 		return false
 	}
 	j.commitIndex++
-	_, _ = j.processor.Process(j.storage[j.commitIndex].Data)
+
+	_, err := j.processor.Process(j.storage[j.commitIndex].Data)
+	if err != nil {
+		log.Errorf("journal commit err: %v", err)
+		return false
+	}
+
 	return true
 }
 
@@ -88,6 +80,9 @@ func (j *Journal) PrevTerm() int {
 }
 
 func (j *Journal) Get(i int) Message {
+	if i < 0 || i >= j.Len() {
+		return Message{}
+	}
 	return j.storage[i]
 }
 
