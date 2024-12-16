@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -70,12 +71,15 @@ func main() {
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+
 	go func() {
 		err = s.ListenAndServe()
-		if err != nil {
+		if err != nil && !errors.Is(http.ErrServerClosed, err) {
+			log.Printf("error in ListenAndServe: %v", err)
 			cancel()
 		}
 	}()
+
 	<-ch
 	log.Print("Shutting down...")
 
