@@ -3,17 +3,16 @@ package node
 import (
 	"time"
 
-	"github.com/peyuaa/raft/internal/cluster/message"
 	"github.com/peyuaa/raft/internal/journal"
 )
 
-type entry = message.Entry[any]
+type entry = Entry[any]
 
-func (n *Node) requestVoteHandle(msg message.RequestVote, timeNow time.Time) {
+func (n *Node) requestVoteHandle(msg RequestVote, timeNow time.Time) {
 	to := n.Nodes[msg.GetFrom()]
 
 	if msg.GetTerm() <= n.Term { // if we don't need to update Term
-		to.Send(message.Vote{
+		to.Send(Vote{
 			From:        n.Id.String(),
 			To:          to.Id.String(),
 			Term:        n.Term,
@@ -31,7 +30,7 @@ func (n *Node) requestVoteHandle(msg message.RequestVote, timeNow time.Time) {
 
 	n.updateTerm(msg.GetTerm(), timeNow)
 
-	vote := message.Vote{
+	vote := Vote{
 		From:        n.Id.String(),
 		To:          to.Id.String(),
 		Term:        n.Term,
@@ -41,7 +40,7 @@ func (n *Node) requestVoteHandle(msg message.RequestVote, timeNow time.Time) {
 	to.Send(vote)
 }
 
-func (n *Node) voteHandler(msg message.Vote) {
+func (n *Node) voteHandler(msg Vote) {
 	if n.Role == Leader {
 		return
 	}
@@ -62,7 +61,7 @@ func (n *Node) voteHandler(msg message.Vote) {
 		n.SetRole(Leader)
 		n.LeaderHeartDeadline = time.Time{}
 		for _, node := range n.Nodes {
-			node.Send(message.AppendEntries{
+			node.Send(AppendEntries{
 				From:        n.Id.String(),
 				To:          node.Id.String(),
 				Term:        n.Term,
@@ -75,7 +74,7 @@ func (n *Node) voteHandler(msg message.Vote) {
 	}
 }
 
-func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time) {
+func (n *Node) appendEntriesHandler(msg AppendEntries, timeNow time.Time) {
 	n.updateTerm(msg.GetTerm(), timeNow)
 	n.Voted = false
 
@@ -92,7 +91,7 @@ func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time
 		}
 		if n.Journal.PrevIndex() > n.Journal.CommitIndex() {
 			if n.Journal.Commit() {
-				n.Nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
+				n.Nodes[msg.GetFrom()].Send(AppendEntriesResponse{
 					From:       n.Id.String(),
 					To:         msg.From,
 					Term:       n.Term,
@@ -112,7 +111,7 @@ func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time
 				Data:  msg.Entries[0].Data,
 			})
 		}
-		n.Nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
+		n.Nodes[msg.GetFrom()].Send(AppendEntriesResponse{
 			From:       n.Id.String(),
 			To:         msg.From,
 			Term:       n.Term,
@@ -121,7 +120,7 @@ func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time
 		})
 		return
 	}
-	n.Nodes[msg.GetFrom()].Send(message.AppendEntriesResponse{
+	n.Nodes[msg.GetFrom()].Send(AppendEntriesResponse{
 		From:       n.Id.String(),
 		To:         msg.From,
 		Term:       n.Term,
@@ -130,10 +129,10 @@ func (n *Node) appendEntriesHandler(msg message.AppendEntries, timeNow time.Time
 	})
 }
 
-func (n *Node) appendEntriesResponseHandler(msg message.AppendEntriesResponse) {
+func (n *Node) appendEntriesResponseHandler(msg AppendEntriesResponse) {
 	if msg.Success {
 		if msg.MatchIndex < n.Journal.CommitIndex() {
-			n.Nodes[msg.GetFrom()].Send(message.AppendEntries{
+			n.Nodes[msg.GetFrom()].Send(AppendEntries{
 				From:        n.Id.String(),
 				To:          msg.From,
 				Term:        n.Term,
@@ -176,7 +175,7 @@ func (n *Node) appendEntriesResponseHandler(msg message.AppendEntriesResponse) {
 					entries = n.VoteUpdate.Entry
 				}
 			}
-			n.Nodes[msg.GetFrom()].Send(message.AppendEntries{
+			n.Nodes[msg.GetFrom()].Send(AppendEntries{
 				From:        n.Id.String(),
 				To:          msg.From,
 				Term:        n.Term,
@@ -196,7 +195,7 @@ func (n *Node) appendEntriesResponseHandler(msg message.AppendEntriesResponse) {
 				n.Journal.Commit()
 			}
 		}
-		n.Nodes[msg.GetFrom()].Send(message.AppendEntries{
+		n.Nodes[msg.GetFrom()].Send(AppendEntries{
 			From:        n.Id.String(),
 			To:          msg.From,
 			Term:        n.Term,
@@ -207,7 +206,7 @@ func (n *Node) appendEntriesResponseHandler(msg message.AppendEntriesResponse) {
 		})
 		return
 	}
-	n.Nodes[msg.GetFrom()].Send(message.AppendEntries{
+	n.Nodes[msg.GetFrom()].Send(AppendEntries{
 		From:        n.Id.String(),
 		To:          msg.From,
 		Term:        n.Term,
