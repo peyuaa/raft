@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/peyuaa/raft/internal/cluster"
+	"github.com/peyuaa/raft/internal/handler"
 )
 
 type Config struct {
@@ -51,7 +52,7 @@ func main() {
 		}
 	}()
 
-	h := cluster.NewHandler(r)
+	h := handler.New(r)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/nodes", h.Nodes)
 	mux.HandleFunc("/journal", h.Journal)
