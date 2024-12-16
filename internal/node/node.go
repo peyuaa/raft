@@ -129,13 +129,7 @@ loop:
 			n.handleMessage(msg, timestamp)
 		case <-ticker.C:
 			if n.Role == Leader {
-				for _, node := range n.Nodes {
-					select {
-					case v := <-node.WaitRequest:
-						n.Updaters <- v
-					default:
-					}
-				}
+				n.processUpdates()
 			}
 			now := time.Now()
 
@@ -152,6 +146,16 @@ loop:
 		}
 	}
 	return nil
+}
+
+func (n *Node) processUpdates() {
+	for _, node := range n.Nodes {
+		select {
+		case v := <-node.WaitRequest:
+			n.Updaters <- v
+		default:
+		}
+	}
 }
 
 func (n *Node) messageInvalid(msg Message) bool {
