@@ -59,7 +59,7 @@ func (n *Node) voteHandler(msg Vote) {
 	if n.CurrentVotes >= (len(n.VotePool)+1)/2 {
 		n.Logger.Infof("a leader is %v", n.Id)
 		n.SetRole(Leader)
-		n.LeaderHeartDeadline = time.Time{}
+		n.LeaderHeartBeatDeadline = time.Time{}
 		for _, node := range n.Nodes {
 			node.Send(AppendEntries{
 				From:        n.Id.String(),
