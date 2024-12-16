@@ -8,13 +8,32 @@ import (
 	"os/signal"
 	"syscall"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/peyuaa/raft/internal/cluster"
 )
 
-const nodesCount = 5
+type Config struct {
+	NodesNumber int `yaml:"nodes_number"`
+}
+
+const (
+	configFile = "config.yaml"
+)
 
 func main() {
-	r, err := cluster.New(nodesCount)
+	yamlFile, err := os.ReadFile(configFile)
+	if err != nil {
+		log.Fatalf("unable to read config file: %v", err)
+	}
+
+	var cfg Config
+	err = yaml.Unmarshal(yamlFile, &cfg)
+	if err != nil {
+		log.Fatalf("unable to parse config file: %v", err)
+	}
+
+	r, err := cluster.New(cfg.NodesNumber)
 	if err != nil {
 		log.Fatalf("unable to create raft cluster: %v", err)
 	}
