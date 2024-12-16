@@ -196,7 +196,6 @@ func (n *Node) appendEntriesResponseHandler(msg message.AppendEntriesResponse) {
 				n.journal.Commit()
 			}
 		}
-		n.logger.Info("!!!!!!!!!!!")
 		n.nodes[msg.GetFrom()].Send(message.AppendEntries{
 			From:        n.id.String(),
 			To:          msg.From,
