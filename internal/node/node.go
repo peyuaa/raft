@@ -199,7 +199,7 @@ func (n *Node) Send(msg Message) {
 
 func (n *Node) Election(timeNow time.Time) {
 	n.Logger.Infof("%v: election", n.Id)
-	n.CurrentVotes = 1
+	n.CurrentVotes = 0
 	n.clearVotePool()
 	n.updateTerm(n.Term+1, timeNow)
 	go func() {
